@@ -1,3 +1,4 @@
+package DMSC;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -146,9 +147,8 @@ public class MSC1 {
 					String key = hiter.next();
 					System.out.println(key+":"+headerField.get(key).toString());
 				}
-				*/
-				
-				int use_parser = 0;
+				*/		        
+				int serviceType = 0;
 				Iterator<String> hiter = headerField.keySet().iterator();
 				while (hiter.hasNext()){
 					String key = hiter.next();
@@ -157,77 +157,22 @@ public class MSC1 {
 					
 					if(key.equals("Servicetype"))
 					{
-						String serviceType = headerField.get(key).toString();
-						if(serviceType.equals("[LookupService]"))
-							use_parser = 1;
-						else if(serviceType.equals("[RequestService]"))
-							use_parser = 2;
+						String TypeStr = headerField.get(key).toString();
+						if(TypeStr.equals("[LookupService]") 
+							|| TypeStr.equals("[GetAllInstanceById]") 
+							|| TypeStr.equals("[SearchInstanceByLocation]"))
+							serviceType = 1;
+						else if(TypeStr.equals("[RequestService]"))
+							serviceType = 2;
+						else if(TypeStr.equals("[GetInstance]"))
+							serviceType = 3;
 						break;
 					}
 				}
 				
-				if(use_parser == 1 || use_parser == 2)
-				{
-					try {
-						int i = 0;
-						Iterator<JSONObject> iterator = null;
-						JSONArray Jarr = new JSONArray();
-						if(use_parser == 1){
-							JSONParser Jpar = new JSONParser();
-					        JSONArray Jdata = (JSONArray) Jpar.parse(message);
-							iterator = Jdata.iterator();
-						}
-						else if(use_parser == 2){
-							JSONParser Jpar = new JSONParser();
-							JSONObject Jobj = (JSONObject) Jpar.parse(message);
-							
-							System.out.println("meta : " + Jobj.get("meta"));
-							
-					        JSONArray Jdata = (JSONArray) Jobj.get("data");
-							iterator = Jdata.iterator();
-						}
-						
-						use_parser = 0;
-						
-						while(iterator.hasNext()){
-							JSONObject Jobj1 = iterator.next();
-							JSONObject Jobj2 = new JSONObject();
-							
-							++i;
-							System.out.println();
-							System.out.println("===== " + i + " =====");
-							//System.out.println(i + "======" + Jobj1.toString());
-							
-							Iterator<String> iter = Jobj1.keySet().iterator();
-							while (iter.hasNext()){
-								String key = iter.next();
-								Object val = Jobj1.get(key);
-								
-								if(!key.equals("instanceAsXml")){
-									Jobj2.put(key, val);
-									if(val == null)
-										System.out.println(key+":"+ "null");
-									else
-										System.out.println(key+":"+Jobj1.get(key).toString());
-								}
-							}
-							
-							//System.out.println("===== " + i + " =====");
-							//System.out.println(Jobj2.toString());
-							//System.out.println();
-							
-							Jarr.add(Jobj2);
-						}
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
-				else
-				{
-					System.out.println("Response: " + message);
-				}
-			}
-			
+				MessageController messageController = new MessageController();
+				messageController.PrintMessage(message, serviceType);
+			}			
 		});
 		
 		Scanner scan = new Scanner(System.in);
@@ -237,10 +182,13 @@ public class MSC1 {
 			System.out.println("========== Dummy Client ==========");
 			System.out.println("0. Exit");
 			System.out.println("1. Lookup Service");
-			System.out.println("2. Submit Certificate(active)");
-			System.out.println("3. Submit Certificate(revoked)");
-			System.out.println("4. Select Service");
-			System.out.println("5. Request Service");
+			System.out.println("2. Get Instance");
+			System.out.println("3. Get All Instance by ID");
+			System.out.println("4. Search Instance by Location");
+			System.out.println("5. Submit Certificate(active)");
+			System.out.println("6. Submit Certificate(revoked)");
+			System.out.println("7. Select Service");
+			System.out.println("8. Request Service");
 			System.out.println("==================================");
 			System.out.print("Input Menu#: ");
 			
@@ -258,7 +206,32 @@ public class MSC1 {
 					//sender.sendPostMsg("urn:mrn:smart-navi:device:msr4-20171117", "LookupService"); //===== Workstation2
 					//sender.sendPostMsg("urn:mrn:smart-navi:device:msr5-20171117", "LookupService"); //===== Server
 					break;
-				case 2: //Submit Certificate(active)
+				case 2: //Get Instance
+					System.out.println("<<Get Instance>>");
+					System.out.print("Input Instance ID : ");
+					String instanceId = scan.next();
+					System.out.print("Input Instance Version : ");
+					String instanceVersion = scan.next();
+					System.out.println("");
+					sender.sendPostMsg("urn:mrn:smart-navi:device:dummy-msr1", "GetInstance#:" + instanceId + "#:" + instanceVersion);
+					break;
+				case 3: //Get All Instance by ID
+					System.out.println("<<Get All Instance by ID>>");
+					System.out.print("Input Instance ID : ");
+					String instanceId2 = scan.next();
+					System.out.println("");
+					sender.sendPostMsg("urn:mrn:smart-navi:device:dummy-msr1", "GetAllInstanceById#:" + instanceId2);
+					break;
+				case 4: //Search Instance by Location
+					System.out.println("<<Get All Instance by ID>>");
+					System.out.print("Input Latitude : ");
+					String latitude = scan.next();
+					System.out.print("Input Longitude : ");
+					String Longitude = scan.next();
+					System.out.println("");
+					sender.sendPostMsg("urn:mrn:smart-navi:device:dummy-msr1", "SearchInstanceByLocation#:" + latitude + "#:" + Longitude);
+					break;
+				case 5: //Submit Certificate(active)
 					headerfield.clear();
 					
 					valueList.clear();
@@ -277,7 +250,7 @@ public class MSC1 {
 					sender.sendPostMsg("urn:mrn:smart-navi:device:msp4-20171117", "/forwarding", "VerifySignedData"); //===== Workstation2
 					//sender.sendPostMsg("urn:mrn:smart-navi:device:msp5-20171117", "/forwarding", "VerifySignedData"); //===== Server
 					break;
-				case 3: //Submit Certificate(revoked)
+				case 6: //Submit Certificate(revoked)
 					headerfield.clear();
 					
 					valueList.clear();
@@ -296,11 +269,11 @@ public class MSC1 {
 					sender.sendPostMsg("urn:mrn:smart-navi:device:msp4-20171117", "/forwarding", "VerifySignedData"); //===== Workstation2
 					//sender.sendPostMsg("urn:mrn:smart-navi:device:msp5-20171117", "/forwarding", "VerifySignedData"); //===== Server
 					break;
-				case 4: //Select Service 
+				case 7: //Select Service 
 					System.out.println("<<Select Service>>");
 					//sender.sendPostMsg("urn:mrn:smart-navi:device:msp3-20171117", "/forwarding", "SelectService");
 					break;
-				case 5: //Request Service
+				case 8: //Request Service
 					System.out.println("<<Request Service>>");
 					//sender.sendPostMsg("urn:mrn:smart-navi:device:msp2-20171117", "/forwarding", "RequestService"); //===== KILee
 					//sender.sendPostMsg("urn:mrn:smart-navi:device:msp3-20171117", "/forwarding", "RequestService"); //===== Workstation1
