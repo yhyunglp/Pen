@@ -223,7 +223,7 @@ public class MSC1 {
 					sender.sendPostMsg("urn:mrn:smart-navi:device:dummy-msr1", "GetAllInstanceById#:" + instanceId2);
 					break;
 				case 4: //Search Instance by Location
-					System.out.println("<<Get All Instance by ID>>");
+					System.out.println("<<Search Instance by Location>>");
 					System.out.print("Input Latitude : ");
 					String latitude = scan.next();
 					System.out.print("Input Longitude : ");
